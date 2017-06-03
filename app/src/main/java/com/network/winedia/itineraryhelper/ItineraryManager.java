@@ -142,6 +142,11 @@ class Itinerary {
         }
         appendix = itiJsonObj.getString("appendix");
     }
+
+    public String toJsonString() {
+        Gson gson = new Gson();
+        return gson.toJson(this);
+    }
 }
 
 public class ItineraryManager {
@@ -178,8 +183,7 @@ public class ItineraryManager {
     }
 
     public static void writeItinerary(String id, Itinerary iti) {
-        Gson gson = new Gson();
-        String itiStr = gson.toJson(iti);
+        String itiStr = iti.toJsonString();
         Log.i(TAG, "writeItinerary: JSONString: " + itiStr);
 
         try {
