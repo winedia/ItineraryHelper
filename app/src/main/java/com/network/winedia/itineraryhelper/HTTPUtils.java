@@ -46,7 +46,7 @@ public class HTTPUtils {
             URL url = new URL(urlStr);
             String data = getRequestData(params, "utf-8").toString();
             HttpURLConnection urlConn = (HttpURLConnection)url.openConnection();
-            urlConn.setConnectTimeout(3000);
+            urlConn.setConnectTimeout(5000);
             urlConn.setDoInput(true);
             urlConn.setDoOutput(true);
             urlConn.setRequestMethod("POST");
