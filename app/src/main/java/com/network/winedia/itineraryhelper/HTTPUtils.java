@@ -136,15 +136,15 @@ public class HTTPUtils {
         params.put("request_type", "DOWNLOAD");
         params.put("user", user);
         params.put("id",id);
-        String result = doGet(params, SERVER_URL);
+        String result = doPost(params, SERVER_URL);
         Itinerary iti = null;
         try {
             JSONObject resultObj = new JSONObject(result);
             String respType = resultObj.getString("response_type");
             String respId = resultObj.getString("id");
             if (respType.equals("DOWNLOAD") && id.equals(respId)) {
-                int status = resultObj.getInt("status");
-                if (status == 0) {
+                String status = resultObj.getString("status");
+                if (status.equals("SUCCEEDED")) {
                     JSONObject itiObj = resultObj.getJSONObject("plan");
                     iti = new Itinerary();
                     iti.parseItiObj(itiObj);
@@ -163,14 +163,14 @@ public class HTTPUtils {
         params.put("request_type", "UPLOAD");
         params.put("user", user);
         params.put("auth", String.valueOf(auth));
-        String result = doGet(params, SERVER_URL);
+        String result = doPost(params, SERVER_URL);
         String ret = "";
         try {
             JSONObject resultObj = new JSONObject(result);
             String respType = resultObj.getString("response_type");
             if (respType.equals("UPLOAD")) {
-            int status = resultObj.getInt("status");
-                if (status == 0) {
+                String status = resultObj.getString("status");
+                if (status.equals("SUCCEEDED")) {
                     ret = resultObj.getString("id");
                 } else {
                     Log.i(TAG, "uploadRequest: ErrorMessage: " + resultObj.getString("error_msg"));
@@ -188,14 +188,14 @@ public class HTTPUtils {
         params.put("user", user);
         params.put("id", id);
         params.put("source_user", sourceUser);
-        String result = doGet(params, SERVER_URL);
+        String result = doPost(params, SERVER_URL);
         String ret = "";
         try {
             JSONObject resultObj = new JSONObject(result);
             String respType = resultObj.getString("response_type");
             if (respType.equals("FORK")) {
-                int status = resultObj.getInt("status");
-                if (status == 0) {
+                String status = resultObj.getString("status");
+                if (status.equals("SUCCEEDED")) {
                     ret = resultObj.getString("id");
                 } else {
                     Log.i(TAG, "uploadRequest: ErrorMessage: " + resultObj.getString("error_msg"));
