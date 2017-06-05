@@ -95,17 +95,11 @@ public class TCPUtils {
         try {
             if (isConnected && !clientSocket.isOutputShutdown()) {
                 byte[] buffer;
-                if (type != 8 && type != 10) {
-                    int len = message.length();
-                    buffer = new byte[len + 8];
-                    System.arraycopy(intToByteArray(type), 0, buffer, 0, 4);
-                    System.arraycopy(intToByteArray(len), 0, buffer, 4, 4);
-                    System.arraycopy(message.getBytes(), 0, buffer, 8, len);
-                } else {
-                    buffer = new byte[24];
-                    System.arraycopy(intToByteArray(type), 0, buffer, 0, 4);
-                    System.arraycopy(message.getBytes(), 0, buffer, 4, 20);
-                }
+                int len = message.length();
+                buffer = new byte[len + 8];
+                System.arraycopy(intToByteArray(type), 0, buffer, 0, 4);
+                System.arraycopy(intToByteArray(len), 0, buffer, 4, 4);
+                System.arraycopy(message.getBytes(), 0, buffer, 8, len);
                 cos.write(buffer);
                 cos.flush();
                 return true;

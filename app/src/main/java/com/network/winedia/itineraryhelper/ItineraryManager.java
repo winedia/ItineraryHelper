@@ -20,21 +20,6 @@ import java.io.OutputStreamWriter;
 import java.util.List;
 
 class Route {
-    class Travel {
-        String type, content;
-        int time;
-    }
-
-    class Place {
-        String name, href, content, img;
-        int time;
-    }
-
-    class Transport {
-        String type;
-        int time;
-    }
-
     class Hotel {
         String name, content, href, img;
     }
@@ -44,12 +29,63 @@ class Route {
         String details;
     }
 
+    class City {
+        class Travel {
+            String type, content;
+            int time;
+        }
+
+        class Place {
+            String name, href, content, img;
+            int time;
+        }
+
+        class Transport {
+            String type;
+            int time;
+        }
+
+        String name;
+        Travel travel;
+        List<Place> place;
+        List<Transport> transport;
+
+        public void parseCityObj(JSONObject cityObj) throws JSONException {
+            name = cityObj.getString("name");
+
+            JSONObject trObj = cityObj.optJSONObject("travel");
+            if (trObj != null) {
+                travel.type = trObj.getString("type");
+                travel.content = trObj.getString("content");
+                travel.time = trObj.getInt("time");
+            }
+
+            JSONArray placeArr = cityObj.getJSONArray("place");
+            for (int i = 0; i < placeArr.length(); i++) {
+                JSONObject plObj = placeArr.getJSONObject(i);
+                Place pl = new Place();
+                pl.name = plObj.getString("name");
+                pl.href = plObj.getString("href");
+                pl.img = plObj.getString("img");
+                pl.content = plObj.getString("content");
+                pl.time = plObj.getInt("time");
+                place.add(pl);
+            }
+
+            JSONArray transportArr = cityObj.getJSONArray("transport");
+            for (int i = 0; i < transportArr.length(); i++) {
+                JSONObject tpObj = transportArr.getJSONObject(i);
+                Transport tp = new Transport();
+                tp.type = tpObj.getString("type");
+                tp.time = tpObj.getInt("time");
+                transport.add(tp);
+            }
+        }
+    }
+
     int number;
-    List<String> city;
-    List<Travel> travel;
+    List<City> city;
     String content;
-    List<Place> place;
-    List<Transport> tranport;
     Hotel hotel;
     Budget budget;
 
@@ -58,46 +94,18 @@ class Route {
 
         JSONArray cityArr = routeObj.getJSONArray("city");
         for (int i = 0; i < cityArr.length(); i++) {
-            city.add(cityArr.getString(i));
-        }
-
-        JSONArray travelArr = routeObj.getJSONArray("travel");
-        for (int i = 0; i < travelArr.length(); i++) {
-            JSONObject trObj = travelArr.getJSONObject(i);
-            Travel tr = new Travel();
-            tr.type = trObj.getString("type");
-            tr.content = trObj.getString("content");
-            tr.time = trObj.getInt("time");
-            travel.add(tr);
+            City ct = new City();
+            ct.parseCityObj(cityArr.getJSONObject(i));
+            city.add(ct);
         }
         content = routeObj.getString("content");
-
-        JSONArray placeArr = routeObj.getJSONArray("place");
-        for (int i = 0; i < placeArr.length(); i++) {
-            JSONObject plObj = placeArr.getJSONObject(i);
-            Place pl = new Place();
-            pl.name = plObj.getString("name");
-            pl.href = plObj.getString("href");
-            pl.img = plObj.getString("img");
-            pl.content = plObj.getString("content");
-            pl.time = plObj.getInt("time");
-            place.add(pl);
+        JSONObject hotelObj = routeObj.optJSONObject("hotel");
+        if (hotelObj != null) {
+            hotel.name = hotelObj.getString("name");
+            hotel.content = hotelObj.getString("content");
+            hotel.href = hotelObj.getString("href");
+            hotel.img = hotelObj.getString("img");
         }
-
-        JSONArray transportArr = routeObj.getJSONArray("transport");
-        for (int i = 0; i < transportArr.length(); i++) {
-            JSONObject tpObj = transportArr.getJSONObject(i);
-            Transport tp = new Transport();
-            tp.type = tpObj.getString("type");
-            tp.time = tpObj.getInt("time");
-            tranport.add(tp);
-        }
-
-        JSONObject hotelObj = routeObj.getJSONObject("hotel");
-        hotel.name = hotelObj.getString("name");
-        hotel.content = hotelObj.getString("content");
-        hotel.href = hotelObj.getString("href");
-        hotel.img = hotelObj.getString("img");
 
         JSONObject budgetObj = routeObj.getJSONObject("budget");
         budget.sum = budgetObj.getInt("sum");
