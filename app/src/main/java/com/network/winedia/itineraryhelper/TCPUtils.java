@@ -16,8 +16,8 @@ import java.net.Socket;
 import java.net.SocketAddress;
 
 public class TCPUtils {
-    private static final String SERVER_IP = "";
-    private static final int SERVER_PORT = 8000;
+    private static final String SERVER_IP = "162.105.30.185";
+    private static final int SERVER_PORT = 8011;
     private static final int TIMEOUT = 5000;
     private static final String TAG = "TCP Service";
 
@@ -93,7 +93,8 @@ public class TCPUtils {
 
     private static boolean sendMessage(int type, String message) {
         try {
-            if (isConnected && !clientSocket.isOutputShutdown()) {
+            if (!isConnected) connectToServer();
+            if (!clientSocket.isOutputShutdown()) {
                 byte[] buffer;
                 int len = message.length();
                 buffer = new byte[len + 8];
@@ -117,8 +118,9 @@ public class TCPUtils {
         public void run() {
             byte[] buffer = new byte[4096];
             int len;
-            if (clientSocket != null && isConnected) {
+            if (clientSocket != null) {
                 try {
+                    if (!isConnected) connectToServer();
                     while (!clientSocket.isInputShutdown() && (len = cis.read(buffer)) != -1) {
                         if (len > 0) {
                             byte[] b = new byte[4];
@@ -136,6 +138,7 @@ public class TCPUtils {
                             }
                             procReceivedMessage(type, new String(strBuffer));
                         }
+                        if (!isConnected) connectToServer();
                     }
                 } catch (IOException e) {
                     e.printStackTrace();

@@ -22,7 +22,7 @@ import java.util.Map;
 
 public class HTTPUtils {
     private static final String TAG = "HTTPUtils";
-    private static final String SERVER_URL = "";
+    private static final String SERVER_URL = "http://162.105.30.185/post.php";
 
     private static StringBuffer getRequestData(Map<String, String> params, String encode) {
         StringBuffer stringBuffer = new StringBuffer();
@@ -43,8 +43,10 @@ public class HTTPUtils {
     private static String doPost(Map<String, String> params, String urlStr) {
         String result = "";
         try{
-            URL url = new URL(urlStr);
             String data = getRequestData(params, "utf-8").toString();
+            Log.i(TAG, "doPost: Params:"+ data);
+
+            URL url = new URL(urlStr);
             HttpURLConnection urlConn = (HttpURLConnection)url.openConnection();
             urlConn.setConnectTimeout(5000);
             urlConn.setDoInput(true);
@@ -56,7 +58,6 @@ public class HTTPUtils {
 
             urlConn.connect();
             DataOutputStream dop = new DataOutputStream(urlConn.getOutputStream());
-            Log.i(TAG, "doPost: Params:"+ data);
             dop.writeBytes(data);
             dop.flush();
             dop.close();
@@ -108,20 +109,20 @@ public class HTTPUtils {
         return result;
     }
 
-    public static int syncRequest(Itinerary iti, String user) {
+    public static String syncRequest(Itinerary iti, String user) {
         Map<String, String> params = new HashMap<>();
         params.put("request_type", "SYNC");
         params.put("id", iti.id);
         params.put("user", user);
         params.put("plan", iti.toJsonString());
         String result = doPost(params, SERVER_URL);
-        int ret = -1;
+        String ret = "";
         try {
             JSONObject resultObj = new JSONObject(result);
             String respType = resultObj.getString("response_type");
             if (respType.equals("SYNC")) {
-                ret = resultObj.getInt("status");
-                if (ret != 0) {
+                ret = resultObj.getString("status");
+                if (!ret.equals("SUCCEEDED")) {
                     Log.i(TAG, "syncRequest: ErrorMessage: " + resultObj.getString("error_msg"));
                 }
             }
@@ -172,6 +173,7 @@ public class HTTPUtils {
                 String status = resultObj.getString("status");
                 if (status.equals("SUCCEEDED")) {
                     ret = resultObj.getString("id");
+                    Log.i(TAG, "uploadRequest: Id: " + ret);
                 } else {
                     Log.i(TAG, "uploadRequest: ErrorMessage: " + resultObj.getString("error_msg"));
                 }
@@ -182,11 +184,12 @@ public class HTTPUtils {
         return ret;
     }
 
-    public static String forkRequest(String user, String id, String sourceUser) {
+    public static String forkRequest(String user, String id, int auth, String sourceUser) {
         Map<String, String> params = new HashMap<>();
         params.put("request_type", "FORK");
         params.put("user", user);
         params.put("id", id);
+        params.put("auth", String.valueOf(auth));
         params.put("source_user", sourceUser);
         String result = doPost(params, SERVER_URL);
         String ret = "";
