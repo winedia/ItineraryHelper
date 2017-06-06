@@ -1,5 +1,6 @@
 package com.network.winedia.itineraryhelper;
 
+import android.os.Environment;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -10,6 +11,7 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -17,6 +19,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.List;
 
 class Route {
@@ -46,9 +49,9 @@ class Route {
         }
 
         String name;
-        Travel travel;
-        List<Place> place;
-        List<Transport> transport;
+        Travel travel = new Travel();
+        List<Place> place = new ArrayList<>();
+        List<Transport> transport = new ArrayList<>();
 
         public void parseCityObj(JSONObject cityObj) throws JSONException {
             name = cityObj.getString("name");
@@ -84,10 +87,10 @@ class Route {
     }
 
     int number;
-    List<City> city;
+    List<City> city = new ArrayList<>();
     String content;
-    Hotel hotel;
-    Budget budget;
+    Hotel hotel = new Hotel();
+    Budget budget = new Budget();
 
     public void parseRouteObj(JSONObject routeObj) throws JSONException {
         number = routeObj.getInt("number");
@@ -114,15 +117,16 @@ class Route {
 }
 
 class Itinerary {
+    private static final String TAG = "Itinerary";
     class Overview {
-        List<String> route;
+        List<String> route = new ArrayList<>();
         String tips, summary, img;
     }
 
     String id, title, subtitle, time;
     int people, budget;
-    Overview overview;
-    List<Route> route;
+    Overview overview = new Overview();
+    List<Route> route = new ArrayList<>();
     String appendix;
 
     public void parseItiObj(JSONObject itiJsonObj) throws JSONException {
@@ -148,6 +152,7 @@ class Itinerary {
             rt.parseRouteObj(routeArr.getJSONObject(i));
             route.add(rt);
         }
+
         appendix = itiJsonObj.getString("appendix");
     }
 
@@ -158,13 +163,14 @@ class Itinerary {
 }
 
 public class ItineraryManager {
-    private static final String FILE_PATH = "/storage/itinerary/";
+    //private static final String FILE_PATH = "/storage/itinerary/";
+    private static final File sdDir = Environment.getExternalStorageDirectory();
     private static final String TAG = "Itinerary";
 
     public static Itinerary readItinerary(String id) {
         String itiStr = "";
         try {
-            InputStream is = new FileInputStream(FILE_PATH + id + ".iti");
+            InputStream is = new FileInputStream(sdDir.toString() + "/itinerary/" + id + ".iti");
             String line;
             BufferedReader reader = new BufferedReader(new InputStreamReader(is));
             line = reader.readLine();
@@ -195,7 +201,7 @@ public class ItineraryManager {
         Log.i(TAG, "writeItinerary: JSONString: " + itiStr);
 
         try {
-            OutputStream os = new FileOutputStream(FILE_PATH + id + ".iti");
+            OutputStream os = new FileOutputStream(sdDir.toString() + "/itinerary/" + id + ".iti");
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os));
             writer.write(itiStr);
             writer.close();
