@@ -96,7 +96,7 @@ public class TCPUtils {
             if (!isConnected) connectToServer();
             if (!clientSocket.isOutputShutdown()) {
                 byte[] buffer;
-                int len = message.length();
+                int len = message.getBytes().length;
                 buffer = new byte[len + 8];
                 System.arraycopy(intToByteArray(type), 0, buffer, 0, 4);
                 System.arraycopy(intToByteArray(len), 0, buffer, 4, 4);
@@ -149,10 +149,11 @@ public class TCPUtils {
         private void procReceivedMessage(int type, String message) {
             Log.i(TAG, "procReceivedMessage: Type: "+ type + "; Message: " + message);
             Itinerary iti = null;
+
             try {
                 switch (type) {
                     case 9: // Login response
-                        Log.i(TAG, "procReceivedMessage: Login message: " + message);
+                        // Parse login response message.
                         break;
                     case 11: // Logout response
                         Log.i(TAG, "procReceivedMessage: Logout message: " + message);

@@ -1,6 +1,7 @@
 package com.network.winedia.itineraryhelper;
 
 
+import android.os.StrictMode;
 import android.util.Log;
 
 import org.json.JSONException;
@@ -47,13 +48,14 @@ public class HTTPUtils {
             Log.i(TAG, "doPost: Params:"+ data);
 
             URL url = new URL(urlStr);
+            StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectDiskReads().detectDiskWrites().detectNetwork().penaltyLog().build());
             HttpURLConnection urlConn = (HttpURLConnection)url.openConnection();
             urlConn.setConnectTimeout(5000);
             urlConn.setDoInput(true);
             urlConn.setDoOutput(true);
             urlConn.setRequestMethod("POST");
             urlConn.setUseCaches(false);
-            urlConn.setRequestProperty("Content-Type", "application/x-www-form-encoded");
+            urlConn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
             urlConn.setRequestProperty("Charset", "utf-8");
 
             urlConn.connect();
@@ -166,6 +168,7 @@ public class HTTPUtils {
         params.put("auth", String.valueOf(auth));
         String result = doPost(params, SERVER_URL);
         String ret = "";
+        Log.i(TAG, "uploadRequest: result string: " + result);
         try {
             JSONObject resultObj = new JSONObject(result);
             String respType = resultObj.getString("response_type");
@@ -201,7 +204,7 @@ public class HTTPUtils {
                 if (status.equals("SUCCEEDED")) {
                     ret = resultObj.getString("id");
                 } else {
-                    Log.i(TAG, "uploadRequest: ErrorMessage: " + resultObj.getString("error_msg"));
+                    Log.i(TAG, "forkRequest: ErrorMessage: " + resultObj.getString("error_msg"));
                 }
             }
         } catch (JSONException e) {
