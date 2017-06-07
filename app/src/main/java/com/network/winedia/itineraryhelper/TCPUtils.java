@@ -149,29 +149,97 @@ public class TCPUtils {
         private void procReceivedMessage(int type, String message) {
             Log.i(TAG, "procReceivedMessage: Type: "+ type + "; Message: " + message);
             Itinerary iti = null;
+            JSONObject msgObj;
+            boolean flag;
 
             try {
                 switch (type) {
                     case 9: // Login response
-                        // Parse login response message.
+                        msgObj = new JSONObject(message);
+                        if (msgObj.getString("status").equals("SUCCEEDED")) {
+                            JSONArray inviteArr = msgObj.getJSONArray("invite_list");
+                            for (int i = 0; i < inviteArr.length(); i++) {
+                                JSONObject itiObj = inviteArr.getJSONObject(i).getJSONObject("plan");
+                                iti = new Itinerary();
+                                iti.parseItiObj(itiObj);
+                                login.my.Invite.add(iti);
+                            }
+                            JSONArray shareArr = msgObj.getJSONArray("share_list");
+                            for (int i = 0; i < shareArr.length(); i++) {
+                                JSONObject itiObj = shareArr.getJSONObject(i).getJSONObject("plan");
+                                iti = new Itinerary();
+                                iti.parseItiObj(itiObj);
+                                login.my.Share.add(iti);
+                            }
+                            ItineraryManager.readAllItinerary(login.my.Creat);
+                            login.my.update();
+                        } else {
+                            Log.i(TAG, "procReceivedMessage: Login error: " + msgObj.getString("error_msg"));
+                        }
                         break;
                     case 11: // Logout response
                         Log.i(TAG, "procReceivedMessage: Logout message: " + message);
                         break;
                     case 1: // Shared file
                         iti = parseMessageToIti(message, type);
+                        flag = false;
+                        for (int i = 0; i < login.my.Share.size(); i++) {
+                            if (login.my.Share.get(i).id.equals(iti.id)) {
+                                login.my.Share.set(i, iti);
+                                flag = true;
+                                break;
+                            }
+                        }
+                        if (!flag) login.my.Share.add(iti);
+                        login.my.update();
                         break;
                     case 3: // Invited file
                         iti = parseMessageToIti(message, type);
+                        flag = false;
+                        for (int i = 0; i < login.my.Invite.size(); i++) {
+                            if (login.my.Invite.get(i).id.equals(iti.id)) {
+                                login.my.Invite.set(i, iti);
+                                if (login.my.cur_i.id.equals(iti.id)) {
+                                    login.my.cur_i = iti;
+                                }
+                                flag = true;
+                                break;
+                            }
+                        }
+                        if (!flag) login.my.Invite.add(iti);
+                        login.my.update();
                         break;
                     case 5: // Merge request file
                         iti = parseMessageToIti(message, type);
+                        if (!login.my.cur_i.id.equals(iti.id)) {
+                            for (int i = 0; i < login.my.Creat.size(); i++) {
+                                if (login.my.Creat.get(i).id.equals(iti.id)) {
+                                    login.my.Creat.set(i, iti);
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                        login.my.last_i.mergeItinerary(login.my.cur_i, iti);
+                        login.my.cur_i = login.my.last_i;
+                        mergeRequest(login.my.cur_i, login.my.cur_i.id);
+                        login.my.update();
                         break;
                     case 7: // Broadcasted file
                         iti = parseMessageToIti(message, type);
+                        if (login.my.cur_i.id.equals(iti.id)) {
+                            login.my.cur_i = iti;
+                        }
+                        for (int i = 0; i < login.my.Invite.size(); i++) {
+                            if (login.my.Invite.get(i).id.equals(iti.id)) {
+                                login.my.Invite.set(i, iti);
+                                break;
+                            }
+                        }
+                        login.my.update();
                         break;
                     case 15: // Error message
-                        JSONObject msgObj = new JSONObject(message);
+                        msgObj = new JSONObject(message);
                         int reqNum = msgObj.getInt("request_number");
                         String errMsg = msgObj.getString("error_message");
                         Log.i(TAG, "procReceivedMessage: Error message of request " + reqNum + ": " + errMsg);

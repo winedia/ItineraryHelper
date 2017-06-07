@@ -198,7 +198,7 @@ class Itinerary {
         }
     }
 
-    String id, title, subtitle, time;
+    String id, title, subtitle, time, user;
     int people, budget;
     Overview overview = new Overview();
     List<Route> route = new ArrayList<>();
@@ -206,6 +206,7 @@ class Itinerary {
 
     public void parseItiObj(JSONObject itiJsonObj) throws JSONException {
         id = itiJsonObj.getString("id");
+        user = itiJsonObj.getString("user");
         title = itiJsonObj.getString("title");
         subtitle = itiJsonObj.getString("subtitle");
         time = itiJsonObj.getString("time");
@@ -270,10 +271,11 @@ public class ItineraryManager {
     private static final File sdDir = Environment.getExternalStorageDirectory();
     private static final String TAG = "Itinerary";
 
-    public static Itinerary readItinerary(String id) {
+    private static Itinerary readItinerary(String path) {
         String itiStr = "";
+        Log.i(TAG, "readItinerary: Reading file: " + path);
         try {
-            InputStream is = new FileInputStream(sdDir.toString() + "/itinerary/" + id + ".iti");
+            InputStream is = new FileInputStream(path);
             String line;
             BufferedReader reader = new BufferedReader(new InputStreamReader(is));
             line = reader.readLine();
@@ -299,6 +301,15 @@ public class ItineraryManager {
         return iti;
     }
 
+    public static void readAllItinerary(List<Itinerary> itiList) {
+        File root = new File(sdDir + "/itinerary/");
+        File files[] = root.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                if (f.getName().endsWith(".iti")) itiList.add(readItinerary(f.getPath()));
+            }
+        }
+    }
     public static void writeItinerary(String id, Itinerary iti) {
         String itiStr = iti.toJsonString();
         Log.i(TAG, "writeItinerary: JSONString: " + itiStr);

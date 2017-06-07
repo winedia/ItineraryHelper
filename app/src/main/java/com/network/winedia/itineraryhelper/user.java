@@ -1,4 +1,4 @@
-package com.example.lihongliang.trapp;
+package com.network.winedia.itineraryhelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,4 +14,9 @@ public class user
     List<Itinerary> Invite = new ArrayList<>();
     List<Itinerary> Share = new ArrayList<>();
     Itinerary cur_i;
+    Itinerary last_i;
+
+    public void update() {
+
+    }
 }
