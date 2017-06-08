@@ -23,160 +23,170 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-class Itinerary {
-    private static final String TAG = "Itinerary";
-    class Route {
-        class Hotel {
-            String name, content, href, img;
+class Route {
+    class Hotel {
+        String name, content, href, img;
+    }
+
+    class Budget {
+        int sum;
+        String details;
+    }
+
+    class City {
+        class Travel {
+            String type, content;
+            int time = 0;
         }
 
-        class Budget {
-            int sum;
-            String details;
+        class Place {
+            String name, href, content, img;
+            int time = 0;
         }
 
-        class City {
-            class Travel {
-                String type, content;
-                int time;
+        class Transport {
+            String type;
+            int time = 0;
+        }
+
+        String name;
+        Travel travel;
+        List<Place> place = new ArrayList<>();
+        List<Transport> transport = new ArrayList<>();
+
+        public void parseCityObj(JSONObject cityObj) throws JSONException {
+            name = cityObj.getString("name");
+
+            JSONObject trObj = cityObj.optJSONObject("travel");
+            if (trObj != null) {
+                travel = new Travel();
+                travel.type = trObj.optString("type");
+                travel.content = trObj.optString("content");
+                travel.time = trObj.getInt("time");
             }
 
-            class Place {
-                String name, href, content, img;
-                int time;
+            JSONArray placeArr = cityObj.getJSONArray("place");
+            for (int i = 0; i < placeArr.length(); i++) {
+                JSONObject plObj = placeArr.getJSONObject(i);
+                Place pl = new Place();
+                pl.name = plObj.optString("name");
+                pl.href = plObj.optString("href");
+                pl.img = plObj.optString("img");
+                pl.content = plObj.optString("content");
+                pl.time = plObj.getInt("time");
+                place.add(pl);
             }
 
-            class Transport {
-                String type;
-                int time;
-            }
-
-            String name;
-            Travel travel;
-            List<Place> place = new ArrayList<>();
-            List<Transport> transport = new ArrayList<>();
-
-            public void parseCityObj(JSONObject cityObj) throws JSONException {
-                name = cityObj.getString("name");
-
-                JSONObject trObj = cityObj.optJSONObject("travel");
-                if (trObj != null) {
-                    travel = new Travel();
-                    travel.type = trObj.getString("type");
-                    travel.content = trObj.getString("content");
-                    travel.time = trObj.getInt("time");
-                }
-
-                JSONArray placeArr = cityObj.getJSONArray("place");
-                for (int i = 0; i < placeArr.length(); i++) {
-                    JSONObject plObj = placeArr.getJSONObject(i);
-                    Place pl = new Place();
-                    pl.name = plObj.getString("name");
-                    pl.href = plObj.getString("href");
-                    pl.img = plObj.getString("img");
-                    pl.content = plObj.getString("content");
-                    pl.time = plObj.getInt("time");
-                    place.add(pl);
-                }
-
-                JSONArray transportArr = cityObj.getJSONArray("transport");
-                for (int i = 0; i < transportArr.length(); i++) {
-                    JSONObject tpObj = transportArr.getJSONObject(i);
-                    Transport tp = new Transport();
-                    tp.type = tpObj.getString("type");
-                    tp.time = tpObj.getInt("time");
-                    transport.add(tp);
-                }
-            }
-
-            public void mergeCity(City ct1, City ct2) {
-                name = compareStr(name, ct1.name, ct2.name);
-                travel.type = compareStr(travel.type, ct1.travel.type, ct2.travel.type);
-                travel.content = compareStr(travel.content, ct1.travel.content, ct2.travel.content);
-                travel.time = compareInt(travel.time, ct1.travel.time, ct2.travel.time);
-
-                int len = place.size(), len1 = ct1.place.size(), len2 = ct2.place.size();
-                for (int i = 0; i < len1; i++) {
-                    if (i >= len) {
-                        place.add(ct1.place.get(i));
-                    } else if (i >= len2 || !place.get(i).equals(ct1.place.get(i))) {
-                        place.set(i, ct1.place.get(i));
-                    } else {
-                        place.set(i, ct2.place.get(i));
-                    }
-                }
-                len = transport.size();
-                len1 = ct1.transport.size();
-                len2 = ct2.transport.size();
-                for (int i = 0; i < len1; i++) {
-                    if (i >= len) {
-                        transport.add(ct1.transport.get(i));
-                    } else if (i >= len2 || !transport.get(i).equals(ct1.transport.get(i))) {
-                        transport.set(i, ct1.transport.get(i));
-                    } else {
-                        transport.set(i, ct2.transport.get(i));
-                    }
-                }
+            JSONArray transportArr = cityObj.getJSONArray("transport");
+            for (int i = 0; i < transportArr.length(); i++) {
+                JSONObject tpObj = transportArr.getJSONObject(i);
+                Transport tp = new Transport();
+                tp.type = tpObj.optString("type");
+                tp.time = tpObj.getInt("time");
+                transport.add(tp);
             }
         }
 
-        int number;
-        List<City> city = new ArrayList<>();
-        String content;
-        Hotel hotel;
-        Budget budget;
+        public void mergeCity(City ct1, City ct2) {
+            name = compareStr(name, ct1.name, ct2.name);
+            travel.type = compareStr(travel.type, ct1.travel.type, ct2.travel.type);
+            travel.content = compareStr(travel.content, ct1.travel.content, ct2.travel.content);
+            travel.time = compareInt(travel.time, ct1.travel.time, ct2.travel.time);
 
-        public void parseRouteObj(JSONObject routeObj) throws JSONException {
-            number = routeObj.getInt("number");
-
-            JSONArray cityArr = routeObj.getJSONArray("city");
-            for (int i = 0; i < cityArr.length(); i++) {
-                City ct = new City();
-                ct.parseCityObj(cityArr.getJSONObject(i));
-                city.add(ct);
-            }
-            content = routeObj.getString("content");
-            JSONObject hotelObj = routeObj.optJSONObject("hotel");
-            if (hotelObj != null) {
-                hotel = new Hotel();
-                hotel.name = hotelObj.getString("name");
-                hotel.content = hotelObj.getString("content");
-                hotel.href = hotelObj.getString("href");
-                hotel.img = hotelObj.getString("img");
-            }
-
-            JSONObject budgetObj = routeObj.optJSONObject("budget");
-            if (budgetObj != null) {
-                budget= new Budget();
-                budget.sum = budgetObj.getInt("sum");
-                budget.details = budgetObj.getString("details");
-            }
-        }
-
-        public void mergeRoute(Route rt1, Route rt2) {
-            number = compareInt(number, rt1.number, rt2.number);
-            content = compareStr(content, rt1.content, rt2.content);
-
-            hotel.name = compareStr(hotel.name, rt1.hotel.name, rt2.hotel.name);
-            hotel.content = compareStr(hotel.content, rt1.hotel.content, rt2.hotel.content);
-            hotel.href = compareStr(hotel.href, rt1.hotel.href, rt2.hotel.href);
-            hotel.img = compareStr(hotel.img, rt1.hotel.img, rt2.hotel.img);
-
-            this.budget.details = compareStr(this.budget.details, rt1.budget.details, rt2.budget.details);
-            this.budget.sum = compareInt(this.budget.sum, rt1.budget.sum, rt2.budget.sum);
-
-            int len = city.size(), len1 = rt1.city.size(), len2 = rt2.city.size();
+            int len = place.size(), len1 = ct1.place.size(), len2 = ct2.place.size();
             for (int i = 0; i < len1; i++) {
                 if (i >= len) {
-                    city.add(rt1.city.get(i));
-                } else if (i >= len2) {
-                    city.set(i, rt1.city.get(i));
+                    place.add(ct1.place.get(i));
+                } else if (i >= len2 || !place.get(i).equals(ct1.place.get(i))) {
+                    place.set(i, ct1.place.get(i));
                 } else {
-                    city.get(i).mergeCity(rt1.city.get(i), rt2.city.get(i));
+                    place.set(i, ct2.place.get(i));
+                }
+            }
+            len = transport.size();
+            len1 = ct1.transport.size();
+            len2 = ct2.transport.size();
+            for (int i = 0; i < len1; i++) {
+                if (i >= len) {
+                    transport.add(ct1.transport.get(i));
+                } else if (i >= len2 || !transport.get(i).equals(ct1.transport.get(i))) {
+                    transport.set(i, ct1.transport.get(i));
+                } else {
+                    transport.set(i, ct2.transport.get(i));
                 }
             }
         }
     }
+
+    int number = 0;
+    List<City> city = new ArrayList<>();
+    String content;
+    Hotel hotel;
+    Budget budget;
+
+    public void parseRouteObj(JSONObject routeObj) throws JSONException {
+        number = routeObj.getInt("number");
+
+        JSONArray cityArr = routeObj.getJSONArray("city");
+        for (int i = 0; i < cityArr.length(); i++) {
+            City ct = new City();
+            ct.parseCityObj(cityArr.getJSONObject(i));
+            city.add(ct);
+        }
+        content = routeObj.optString("content");
+        JSONObject hotelObj = routeObj.optJSONObject("hotel");
+        if (hotelObj != null) {
+            hotel = new Hotel();
+            hotel.name = hotelObj.optString("name");
+            hotel.content = hotelObj.optString("content");
+            hotel.href = hotelObj.optString("href");
+            hotel.img = hotelObj.optString("img");
+        }
+
+        JSONObject budgetObj = routeObj.optJSONObject("budget");
+        if (budgetObj != null) {
+            budget= new Budget();
+            budget.sum = budgetObj.getInt("sum");
+            budget.details = budgetObj.optString("details");
+        }
+    }
+
+    public void mergeRoute(Route rt1, Route rt2) {
+        number = compareInt(number, rt1.number, rt2.number);
+        content = compareStr(content, rt1.content, rt2.content);
+
+        hotel.name = compareStr(hotel.name, rt1.hotel.name, rt2.hotel.name);
+        hotel.content = compareStr(hotel.content, rt1.hotel.content, rt2.hotel.content);
+        hotel.href = compareStr(hotel.href, rt1.hotel.href, rt2.hotel.href);
+        hotel.img = compareStr(hotel.img, rt1.hotel.img, rt2.hotel.img);
+
+        this.budget.details = compareStr(this.budget.details, rt1.budget.details, rt2.budget.details);
+        this.budget.sum = compareInt(this.budget.sum, rt1.budget.sum, rt2.budget.sum);
+
+        int len = city.size(), len1 = rt1.city.size(), len2 = rt2.city.size();
+        for (int i = 0; i < len1; i++) {
+            if (i >= len) {
+                city.add(rt1.city.get(i));
+            } else if (i >= len2) {
+                city.set(i, rt1.city.get(i));
+            } else {
+                city.get(i).mergeCity(rt1.city.get(i), rt2.city.get(i));
+            }
+        }
+    }
+
+    private String compareStr(String str0, String str1, String str2) {
+        if (str0.equals(str1)) return str2;
+        return str1;
+    }
+    private int compareInt(int x0, int x1, int x2) {
+        if (x0 == x1) return x2;
+        return x1;
+    }
+}
+
+class Itinerary {
+    private static final String TAG = "Itinerary";
     class Overview {
         List<String> route = new ArrayList<>();
         String tips, summary, img;
@@ -199,7 +209,7 @@ class Itinerary {
     }
 
     String id, title, subtitle, time, user;
-    int people, budget;
+    int people = 0, budget = 0;
     Overview overview = new Overview();
     List<Route> route = new ArrayList<>();
     String appendix;
@@ -207,20 +217,22 @@ class Itinerary {
     public void parseItiObj(JSONObject itiJsonObj) throws JSONException {
         id = itiJsonObj.getString("id");
         user = itiJsonObj.getString("user");
-        title = itiJsonObj.getString("title");
-        subtitle = itiJsonObj.getString("subtitle");
-        time = itiJsonObj.getString("time");
+        title = itiJsonObj.optString("title");
+        subtitle = itiJsonObj.optString("subtitle");
+        time = itiJsonObj.optString("time");
         people = itiJsonObj.getInt("people");
         budget = itiJsonObj.getInt("budget");
 
-        JSONObject overviewObj = itiJsonObj.getJSONObject("overview");
-        JSONArray overviewRouteArr = overviewObj.getJSONArray("route");
-        for (int i = 0; i < overviewRouteArr.length(); i++) {
-            overview.route.add(overviewRouteArr.getString(i));
+        JSONObject overviewObj = itiJsonObj.optJSONObject("overview");
+        if (overviewObj != null) {
+            JSONArray overviewRouteArr = overviewObj.getJSONArray("route");
+            for (int i = 0; i < overviewRouteArr.length(); i++) {
+                overview.route.add(overviewRouteArr.getString(i));
+            }
+            overview.tips = overviewObj.optString("tips");
+            overview.summary = overviewObj.optString("summary");
+            overview.img = overviewObj.optString("img");
         }
-        overview.tips = overviewObj.getString("tips");
-        overview.summary = overviewObj.getString("summary");
-        overview.img = overviewObj.getString("img");
 
         JSONArray routeArr = itiJsonObj.getJSONArray("route");
         for (int i = 0; i < routeArr.length(); i++) {
@@ -229,7 +241,7 @@ class Itinerary {
             route.add(rt);
         }
 
-        appendix = itiJsonObj.getString("appendix");
+        appendix = itiJsonObj.optString("appendix");
     }
 
     public String toJsonString() {
@@ -313,9 +325,11 @@ public class ItineraryManager {
     public static void writeItinerary(String id, Itinerary iti) {
         String itiStr = iti.toJsonString();
         Log.i(TAG, "writeItinerary: JSONString: " + itiStr);
+        File path = new File(sdDir + "/itinerary/");
+        if (!path.exists()) path.mkdir();
 
         try {
-            OutputStream os = new FileOutputStream(sdDir.toString() + "/itinerary/" + id + ".iti");
+            OutputStream os = new FileOutputStream(path + id + ".iti");
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os));
             writer.write(itiStr);
             writer.close();
