@@ -19,7 +19,7 @@ public class TCPUtils {
     private static final String SERVER_IP = "162.105.30.185";
     private static final int SERVER_PORT = 8011;
     private static final int TIMEOUT = 5000;
-    private static final String TAG = "TCP Service";
+    private static final String TAG = "TCPUtils";
 
     private static InputStream cis = null;
     private static OutputStream cos = null;
@@ -101,6 +101,12 @@ public class TCPUtils {
                 System.arraycopy(intToByteArray(type), 0, buffer, 0, 4);
                 System.arraycopy(intToByteArray(len), 0, buffer, 4, 4);
                 System.arraycopy(message.getBytes(), 0, buffer, 8, len);
+                /*
+                for (int i = 0; i < 8; i++) {
+                    Log.i(TAG, "sendMessage: " + (int)buffer[i]);
+                }
+                */
+                Log.i(TAG, "sendMessage: message: " + type + " " + len + " " + message);
                 cos.write(buffer);
                 cos.flush();
                 return true;
@@ -123,19 +129,23 @@ public class TCPUtils {
                     if (!isConnected) connectToServer();
                     while (!clientSocket.isInputShutdown() && (len = cis.read(buffer)) != -1) {
                         if (len > 0) {
+                            Log.i(TAG, "recvThread run: len = " + len);
                             byte[] b = new byte[4];
                             byte[] strBuffer;
                             System.arraycopy(buffer, 0, b, 0, 4);
                             int type = byteArrayToInt(b);
-                            if (type != 9 && type != 11) {
-                                System.arraycopy(buffer, 4, b, 0, 4);
-                                int length = byteArrayToInt(b);
-                                strBuffer = new byte[length];
-                                System.arraycopy(buffer, 8, strBuffer, 0, length);
-                            } else {
-                                strBuffer = new byte[20];
-                                System.arraycopy(buffer, 4, strBuffer, 0, 20);
+                            System.arraycopy(buffer, 4, b, 0, 4);
+                            int length = byteArrayToInt(b);
+                            strBuffer = new byte[length];
+                            int ll = Math.min(len, length + 8) - 8;
+                            System.arraycopy(buffer, 8, strBuffer, 0, ll);
+                            while (ll < length) {
+                                len = cis.read(buffer);
+                                Log.i(TAG, "recvThread run: len = " + len + " ll = " + ll);
+                                System.arraycopy(buffer, 0, strBuffer, ll, len);
+                                ll += len;
                             }
+
                             procReceivedMessage(type, new String(strBuffer));
                         }
                         if (!isConnected) connectToServer();
@@ -159,16 +169,18 @@ public class TCPUtils {
                         if (msgObj.getString("status").equals("SUCCEEDED")) {
                             JSONArray inviteArr = msgObj.getJSONArray("invite_list");
                             for (int i = 0; i < inviteArr.length(); i++) {
-                                JSONObject itiObj = inviteArr.getJSONObject(i).getJSONObject("plan");
+                                JSONObject itiObj = (new JSONObject(inviteArr.getString(i))).getJSONObject("plan");
                                 iti = new Itinerary();
                                 iti.parseItiObj(itiObj);
+                                Log.i(TAG, "procReceivedMessage: invite iti: " + iti.id);
                                 login.my.Invite.add(iti);
                             }
                             JSONArray shareArr = msgObj.getJSONArray("share_list");
                             for (int i = 0; i < shareArr.length(); i++) {
-                                JSONObject itiObj = shareArr.getJSONObject(i).getJSONObject("plan");
+                                JSONObject itiObj = (new JSONObject(shareArr.getString(i))).getJSONObject("plan");
                                 iti = new Itinerary();
                                 iti.parseItiObj(itiObj);
+                                Log.i(TAG, "procReceivedMessage: share iti: " + iti.id);
                                 login.my.Share.add(iti);
                             }
                             ItineraryManager.readAllItinerary(login.my.Creat);
@@ -182,6 +194,7 @@ public class TCPUtils {
                         break;
                     case 1: // Shared file
                         iti = parseMessageToIti(message, type);
+                        if (iti == null) break;
                         flag = false;
                         for (int i = 0; i < login.my.Share.size(); i++) {
                             if (login.my.Share.get(i).id.equals(iti.id)) {
@@ -195,6 +208,7 @@ public class TCPUtils {
                         break;
                     case 3: // Invited file
                         iti = parseMessageToIti(message, type);
+                        if (iti == null) break;
                         flag = false;
                         for (int i = 0; i < login.my.Invite.size(); i++) {
                             if (login.my.Invite.get(i).id.equals(iti.id)) {
@@ -211,6 +225,7 @@ public class TCPUtils {
                         break;
                     case 5: // Merge request file
                         iti = parseMessageToIti(message, type);
+                        if (iti == null) break;
                         if (!login.my.cur_i.id.equals(iti.id)) {
                             for (int i = 0; i < login.my.Creat.size(); i++) {
                                 if (login.my.Creat.get(i).id.equals(iti.id)) {
@@ -227,6 +242,7 @@ public class TCPUtils {
                         break;
                     case 7: // Broadcasted file
                         iti = parseMessageToIti(message, type);
+                        if (iti == null) break;
                         if (login.my.cur_i.id.equals(iti.id)) {
                             login.my.cur_i = iti;
                         }
@@ -268,6 +284,11 @@ public class TCPUtils {
         msgObj.plan = iti;
         Gson gson = new Gson();
         String message = gson.toJson(msgObj);
+        try {
+            JSONObject obj = new JSONObject(message);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
         Log.i(TAG, "shareRequest: Message: " + message);
         return sendMessage(0, message);
     }

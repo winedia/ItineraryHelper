@@ -17,16 +17,18 @@ public class login extends AppCompatActivity
     private Button b;
     private TextView t;
     private String name;
-    public static user my;
+    public static user my = new user();
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        /*
         setContentView(R.layout.login);
         b = (Button)findViewById(R.id.dl);
         t = (TextView)findViewById(R.id.name);
         b.setOnClickListener(new CListner());
+        */
     }
 
     class CListner implements View.OnClickListener
@@ -36,10 +38,12 @@ public class login extends AppCompatActivity
         {
             name = t.getText().toString();
             my.name = name;
-            Thread loginThread = new Thread(new LoginThread(), "netThread");
+            Thread loginThread = new Thread(new LoginThread(), "loginThread");
             loginThread.start();
+            /*
             Intent it = new Intent(login.this, manager.class);
             startActivity(it);
+            */
         }
     }
 
