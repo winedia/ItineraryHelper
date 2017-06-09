@@ -4,6 +4,7 @@ package com.network.winedia.itineraryhelper;
 import android.os.StrictMode;
 import android.util.Log;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -18,7 +19,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class HTTPUtils {
@@ -115,6 +118,7 @@ public class HTTPUtils {
         Map<String, String> params = new HashMap<>();
         params.put("request_type", "SYNC");
         params.put("id", iti.id);
+        params.put("title", iti.title);
         params.put("user", user);
         params.put("plan", iti.toJsonString());
         String result = doPost(params, SERVER_URL);
@@ -205,6 +209,34 @@ public class HTTPUtils {
                     ret = resultObj.getString("id");
                 } else {
                     Log.i(TAG, "forkRequest: ErrorMessage: " + resultObj.getString("error_msg"));
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return ret;
+    }
+
+    public static List<SearchResult> searchRequest(String keyword) {
+        Map<String, String> params = new HashMap<>();
+        params.put("request_type", "SEARCH");
+        params.put("keyword", keyword);
+        String result = doPost(params, SERVER_URL);
+        List<SearchResult> ret = new ArrayList<>();
+        try {
+            JSONObject resultObj = new JSONObject(result);
+            String respType = resultObj.getString("response_type");
+            if (respType.equals("SEARCH")) {
+                String status = resultObj.getString("status");
+                if (status.equals("SUCCEEDED")) {
+                    JSONArray resultArr = resultObj.getJSONArray("result");
+                    for (int i = 0; i < resultArr.length(); i++) {
+                        JSONObject obj = resultArr.getJSONObject(i);
+                        SearchResult sr = new SearchResult(obj.getString("id"), obj.getString("title"));
+                        ret.add(sr);
+                    }
+                } else {
+                    Log.i(TAG, "searchRequest: ErrorMessage: " + resultObj.getString("error_msg"));
                 }
             }
         } catch (JSONException e) {
