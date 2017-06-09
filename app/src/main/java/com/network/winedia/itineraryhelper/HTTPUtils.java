@@ -26,7 +26,7 @@ import java.util.Map;
 
 public class HTTPUtils {
     private static final String TAG = "HTTPUtils";
-    private static final String SERVER_URL = "http://162.105.30.185/post.php";
+    private static final String SERVER_URL = "http://139.198.190.184:8080/post.php";
 
     private static StringBuffer getRequestData(Map<String, String> params, String encode) {
         StringBuffer stringBuffer = new StringBuffer();
@@ -144,6 +144,7 @@ public class HTTPUtils {
         params.put("user", user);
         params.put("id",id);
         String result = doPost(params, SERVER_URL);
+        Log.i(TAG, "downloadRequest: response: " + result);
         Itinerary iti = null;
         try {
             JSONObject resultObj = new JSONObject(result);
@@ -152,7 +153,7 @@ public class HTTPUtils {
             if (respType.equals("DOWNLOAD") && id.equals(respId)) {
                 String status = resultObj.getString("status");
                 if (status.equals("SUCCEEDED")) {
-                    JSONObject itiObj = resultObj.getJSONObject("plan");
+                    JSONObject itiObj = new JSONObject(resultObj.getString("plan"));
                     iti = new Itinerary();
                     iti.parseItiObj(itiObj);
                 } else {
@@ -222,6 +223,7 @@ public class HTTPUtils {
         params.put("request_type", "SEARCH");
         params.put("keyword", keyword);
         String result = doPost(params, SERVER_URL);
+        Log.i(TAG, "searchRequest: response: " + result);
         List<SearchResult> ret = new ArrayList<>();
         try {
             JSONObject resultObj = new JSONObject(result);
@@ -243,5 +245,16 @@ public class HTTPUtils {
             e.printStackTrace();
         }
         return ret;
+    }
+}
+
+class SearchResult {
+    String id, title;
+    SearchResult() {
+
+    }
+    public SearchResult(String idd, String tt) {
+        id = idd;
+        title = tt;
     }
 }
